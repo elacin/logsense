@@ -4,7 +4,6 @@ object client extends App {
   import filters._
   import appenders._
   import cats.std.unit._
-  import cats.syntax.group._
 
   def str(location: SourceLoc): String =
     location match {
@@ -15,16 +14,16 @@ object client extends App {
     }
 
   val consoleAppender: Appender[String, Unit] =
-    ConsoleString {
+    ConsoleCustom {
       case Entry(t, level, loc: SourceLoc, msg, Some(th)) =>
-        s"$t: $level: ${str(loc)}: ${msg.value}: ${th.getMessage}"
+        s"$t: $level: ${str(loc)}: ${msg.lazyValue}: ${th.getMessage}"
       case Entry(t, level, loc, msg, None) =>
-        s"$t: $level: ${str(loc)}: ${msg.value}"
+        s"$t: $level: ${str(loc)}: ${msg.lazyValue}"
     }
 
   val pipe: Pipe[String, Unit] =
     Pipe(
-      consoleAppender |+| NoopAppender,
+      consoleAppender && NoopAppender && CachingAppender,
       infoMin  && inPackage("logsense"),
       debugMin && hasException,
       warningMin
@@ -33,21 +32,26 @@ object client extends App {
   val ctx: Context[String, Unit] =
     ContextUnit(pipe)
 
+  Lazy[String](???) map (_.toString)
   ctx.trace("ARNE", new RuntimeException("ex"))
   ctx.debug("ARNE")
   ctx.info("ARNE")
   ctx.warn("ARNE")
   ctx.warning("ARNE")
   ctx.error("ARNE")
-  Lazy[Arne](???) map (_.toString)
 
-  case class Arne(value: String)
+  {
+    case class Secret(hidden: String)
 
-  val arnePipe: Pipe[Arne, Unit] =
-    Pipe.unfiltered(
-      consoleAppender.xmap[Arne](_.value) |+| NoopAppender.xmap[Arne](_.value)
-    )
-  val arneCtx: Context[Arne, Unit] =
-    ContextUnit(arnePipe)
-  arneCtx.info(Arne("HALLOOO"))
+    val FromSecret: Secret => String =
+      v => s"Discovered «${v.hidden}»!"
+
+    val myCtx: Context[Secret, Unit] =
+      ctx xmap FromSecret filtered Filter[Secret](_.input.lazyValue.hidden.contains("xyzzy"))
+
+    myCtx.info(Secret("xyzzy"))
+    myCtx.info(Secret("XYZZY"))
+  }
+
+  CachingAppender.cache foreach println
 }

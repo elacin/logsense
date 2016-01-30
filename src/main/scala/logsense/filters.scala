@@ -1,6 +1,9 @@
 package logsense
 
 final class Filter[I] (val accepts: Entry[I] => FilterRes) {
+  def xmap[II](f: II => I): Filter[II] =
+    new Filter[II](e => accepts(e xmap f))
+
   def &&(other: Filter[I]): Filter[I] =
     new Filter[I](e => accepts(e) && (other accepts e))
 

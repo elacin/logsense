@@ -1,16 +1,16 @@
 package logsense
 
 sealed trait Lazy[T]{ self =>
-  def value: T
+  def lazyValue: T
 
   final def map[U](f: T => U): Lazy[U] =
     new Lazy[U] {
-      override lazy val value: U = f(self.value)
+      override lazy val lazyValue: U = f(self.lazyValue)
     }
 }
 
 object Lazy {
   def apply[T](t: => T) = new Lazy[T] {
-    override lazy val value: T = t
+    override lazy val lazyValue: T = t
   }
 }

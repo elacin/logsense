@@ -4,10 +4,17 @@ import java.time.LocalDateTime
 
 import cats.Monoid
 
-class Pipe[I, O: Monoid](appender: Appender[I, O], filter: Filter[I]){
+class Pipe[I, O: Monoid](val appender: Appender[I, O], val filter: Filter[I]){
+  def copy(appender: Appender[I, O] = appender, filter: Filter[I] = filter): Pipe[I, O] =
+    new Pipe(appender, filter)
+
+  def xmap[II](f: II => I): Pipe[II, O] =
+    new Pipe[II, O](appender xmap f, filter xmap f)
+
   def flush(level: Level,
             _i:    => I,
-            thOpt: Option[Throwable])
+            thOpt: Option[Throwable],
+            context: Map[String, String])
            (implicit loc:   SourceLocMacro): O = {
 
     val e =
@@ -16,7 +23,8 @@ class Pipe[I, O: Monoid](appender: Appender[I, O], filter: Filter[I]){
         level    = level,
         location = loc,
         input    = Lazy(_i),
-        thOpt    = thOpt
+        thOpt    = thOpt,
+        context  = context
       )
 
     filter.accepts(e) match {
