@@ -7,6 +7,8 @@ sealed trait Lazy[T]{ self =>
     new Lazy[U] {
       override lazy val lazyValue: U = f(self.lazyValue)
     }
+
+  override final def toString = "Lazy"
 }
 
 object Lazy {

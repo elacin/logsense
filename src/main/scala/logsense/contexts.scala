@@ -6,13 +6,13 @@ final class Context[I, O: Monoid](pipes: Seq[Pipe[I, O]], context: Map[String, S
   def copy(pipes: Seq[Pipe[I, O]] = pipes, context: Map[String, String] = context): Context[I, O] =
     new Context(pipes, context)
 
-  def withContext(cs: (String, String)*): Context[I, O] =
+  def enriched(cs: (String, String)*): Context[I, O] =
     copy(context = context ++ cs)
 
   def xmap[II](f: II => I): Context[II, O] =
     new Context(pipes map (_ xmap f), context)
 
-  def included(f: Filter[I]): Context[I, O] =
+  def including(f: Filter[I]): Context[I, O] =
     copy(pipes map (p => p.copy(filter = p.filter || f)))
 
   def filtered(f: Filter[I]): Context[I, O] =
