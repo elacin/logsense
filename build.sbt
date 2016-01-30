@@ -13,6 +13,7 @@ libraryDependencies ++= Seq(
   "com.lihaoyi"                %% "sourcecode"      % "0.1.0",
   "com.typesafe.scala-logging" %% "scala-logging"   % "3.1.0",
   "ch.qos.logback"             %  "logback-classic" % "1.0.13",
-  "com.typesafe.akka"          %% "akka-actor"      % "2.4.1"
+  "com.typesafe.akka"          %% "akka-actor"      % "2.4.1",
+  "org.spire-math"             %% "cats"            % "0.3.0"
 ) ++ slf4j
 
