@@ -2,10 +2,7 @@ package logsense
 
 import java.time.LocalDateTime
 
-case class LogContext[I, O: Monoid](
-  appender: Appender[I, O],
-  filter:   Filter[I]){
-
+abstract class LogContext[I, O: Monoid](appender: Appender[I, O], filter: Filter[I]) {
   sealed abstract class AppenderLevel(level: LogLevel) {
     private def go(_i:    => I,
                    thOpt: Option[Throwable])
@@ -20,10 +17,9 @@ case class LogContext[I, O: Monoid](
           thOpt    = thOpt
         )
 
-      filter.accept(e) match {
-        case Take    => appender(e)
-        case Shorten => Monoid.mzero
-        case Drop    => Monoid.mzero
+      filter.accepts(e) match {
+        case Take | Undecided => appender(e)
+        case Drop             => Monoid.mzero
       }
     }
 
@@ -40,3 +36,8 @@ case class LogContext[I, O: Monoid](
   object debug extends AppenderLevel(Debug)
   object trace extends AppenderLevel(Trace)
 }
+
+case class LogContextUnit[I, O: Monoid](
+  appender: Appender[I, O],
+  filter:   Filter[I]
+) extends LogContext(appender, filter)

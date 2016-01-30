@@ -6,7 +6,7 @@ trait Semigroup[T] {
 
 object Semigroup {
   implicit class SemigroupOps[T: Semigroup](t1: T){
-    def |+|(t2: T): T =
+    def |+|[TT <: T](t2: TT): T =
       mappend(t1, t2)
   }
 
