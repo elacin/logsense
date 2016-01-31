@@ -15,12 +15,10 @@ object client extends App {
           s"${enclosing.value} (${file.value.split("/").last}: ${line.value})"
       }
 
-    def mapStr(context: Map[String, String]): String = {
-      if (context.isEmpty) ""
-      else context.mkString("[", ",", "]: ")
-    }
+    def mapStr(context: Map[String, String]): String =
+      if (context.isEmpty) "" else context.mkString("[", ",", "]: ")
 
-    ConsoleCustom {
+    ConsoleAppender {
       case Entry(t, level, loc: SourceLoc, msg, Some(th), map) =>
         s"$t: $level: ${locStr(loc)}: ${mapStr(map)}${msg.value}: ${th.getMessage}"
       case Entry(t, level, loc, msg, None, map) =>
@@ -29,8 +27,7 @@ object client extends App {
   }
 
   val pipe: Pipe[String] =
-    Pipe(
-      consoleAppender && NoopAppender && CachingAppender,
+    Pipe(consoleAppender, NoopAppender, CachingAppender)(
       infoMin  && inPackage("logsense"),
       debugMin && hasException,
       warningMin

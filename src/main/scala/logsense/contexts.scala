@@ -1,5 +1,7 @@
 package logsense
 
+import java.time.LocalDateTime
+
 final class Context[I](pipes:   Seq[Pipe[I]],
                        context: Map[String, String]) {
 
@@ -21,10 +23,10 @@ final class Context[I](pipes:   Seq[Pipe[I]],
 
   sealed abstract class AppenderLevel(level: Level) {
     def apply(msg: => I)(implicit loc: SourceLocMacro): Unit =
-      pipes foreach (_ flush (level, msg, None, context))
+      pipes foreach (_ flush Entry(level, LocalDateTime.now, msg, None, context))
 
     def apply(msg: => I, th: Throwable)(implicit loc: SourceLocMacro): Unit =
-      pipes foreach (_ flush (level, msg, Some(th), context))
+      pipes foreach (_ flush Entry(level, LocalDateTime.now, msg, Some(th), context))
   }
 
   object error extends AppenderLevel(Error)

@@ -9,22 +9,21 @@ abstract class Appender[I] { self =>
         self.submit(e xmap f)
     }
 
-  final def &&(other: Appender[I]): Appender[I] =
-    new Appender[I]{
-      override def submit(e: Entry[I]): Unit = {
-        self.submit(e)
-        other.submit(e)
-      }
-    }
+  def shouldRetry(attempt: Int, entry: Entry[I], th: Throwable): YesNo =
+    RetryNo
 
   def submit(e: Entry[I]): Unit
 }
 
 object appenders {
-
   object NoopAppender extends Appender[String]{
     override def submit(i: Entry[String]): Unit =
       ()
+  }
+
+  final case class ConsoleAppender[I](f: Entry[I] => String) extends Appender[I]{
+    override def submit(e: Entry[I]): Unit =
+      println(f(e))
   }
 
   object CachingAppender extends Appender[String]{
@@ -32,10 +31,5 @@ object appenders {
 
     override def submit(i: Entry[String]): Unit =
       cache += i
-  }
-
-  final case class ConsoleCustom[I](f: Entry[I] => String) extends Appender[I]{
-    override def submit(e: Entry[I]): Unit =
-      println(f(e))
   }
 }

@@ -10,8 +10,8 @@ case class SourceLocLogger(
 
 case class SourceLocMacro(
   enclosing: Enclosing,
-  file: File,
-  line: Line
+  file:      File,
+  line:      Line
 ) extends SourceLoc
 
 object SourceLocMacro {

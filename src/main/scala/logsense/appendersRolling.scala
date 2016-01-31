@@ -8,6 +8,6 @@ sealed trait RolloverPolicy
 sealed trait TimeRollover extends RolloverPolicy
 sealed trait SizeRollover extends RolloverPolicy
 
-trait RollingFileAppender[I] extends Appender[I, Unit] {
+trait RollingFileAppender[I] extends Appender[I] {
 
 }
