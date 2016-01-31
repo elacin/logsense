@@ -2,21 +2,24 @@ package logsense
 
 import algebra.Monoid
 
-final class Context[I, O: Monoid](pipes: Seq[Pipe[I, O]], context: Map[String, String]) {
-  def copy(pipes: Seq[Pipe[I, O]] = pipes, context: Map[String, String] = context): Context[I, O] =
+final class Context[I, O: Monoid](pipes:   Seq[Pipe[I, O]],
+                                  context: Map[String, String]) {
+
+  def copy(pipes:   Seq[Pipe[I, O]]     = pipes,
+           context: Map[String, String] = context): Context[I, O] =
     new Context(pipes, context)
 
   def enriched(cs: (String, String)*): Context[I, O] =
     copy(context = context ++ cs)
-
-  def xmap[II](f: II => I): Context[II, O] =
-    new Context(pipes map (_ xmap f), context)
 
   def including(f: Filter[I]): Context[I, O] =
     copy(pipes map (p => p.copy(filter = p.filter || f)))
 
   def filtered(f: Filter[I]): Context[I, O] =
     copy(pipes map (p => p.copy(filter = p.filter && f)))
+
+  def xmap[II](f: II => I): Context[II, O] =
+    new Context(pipes map (_ xmap f), context)
 
   sealed abstract class AppenderLevel(level: Level) {
     def apply(msg: => I)(implicit loc: SourceLocMacro): O =
@@ -36,6 +39,6 @@ final class Context[I, O: Monoid](pipes: Seq[Pipe[I, O]], context: Map[String, S
 }
 
 object ContextUnit {
-  def apply[I, O: Monoid](ps: Pipe[I, O]*): Context[I, O] =
-    new Context[I, O](ps, Map.empty)
+  def apply[I, O: Monoid](pipes: Pipe[I, O]*): Context[I, O] =
+    new Context[I, O](pipes, Map.empty)
 }

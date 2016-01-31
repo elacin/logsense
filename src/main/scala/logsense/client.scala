@@ -5,7 +5,6 @@ object client extends App {
   import appenders._
   import cats.std.unit._
 
-
   val consoleAppender: Appender[String, Unit] = {
     def locStr(location: SourceLoc): String =
       location match {
