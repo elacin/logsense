@@ -3,8 +3,8 @@ package logsense
 import cats.Later
 
 object client extends App {
-  import filters._
   import appenders._
+  import filters._
 
   val consoleAppender: Appender[String] = {
     def locStr(location: SourceLoc): String =
