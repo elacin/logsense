@@ -1,32 +1,30 @@
 package logsense
 
-import algebra.Monoid
+final class Context[I](pipes:   Seq[Pipe[I]],
+                       context: Map[String, String]) {
 
-final class Context[I, O: Monoid](pipes:   Seq[Pipe[I, O]],
-                                  context: Map[String, String]) {
-
-  def copy(pipes:   Seq[Pipe[I, O]]     = pipes,
-           context: Map[String, String] = context): Context[I, O] =
+  def copy(pipes:   Seq[Pipe[I]]        = pipes,
+           context: Map[String, String] = context): Context[I] =
     new Context(pipes, context)
 
-  def enriched(cs: (String, String)*): Context[I, O] =
+  def enriched(cs: (String, String)*): Context[I] =
     copy(context = context ++ cs)
 
-  def including(f: Filter[I]): Context[I, O] =
+  def including(f: Filter[I]): Context[I] =
     copy(pipes map (p => p.copy(filter = p.filter || f)))
 
-  def filtered(f: Filter[I]): Context[I, O] =
+  def filtered(f: Filter[I]): Context[I] =
     copy(pipes map (p => p.copy(filter = p.filter && f)))
 
-  def xmap[II](f: II => I): Context[II, O] =
+  def xmap[II](f: II => I): Context[II] =
     new Context(pipes map (_ xmap f), context)
 
   sealed abstract class AppenderLevel(level: Level) {
-    def apply(msg: => I)(implicit loc: SourceLocMacro): O =
-      Reduce(pipes)(_ flush (level, msg, None, context))
+    def apply(msg: => I)(implicit loc: SourceLocMacro): Unit =
+      pipes foreach (_ flush (level, msg, None, context))
 
-    def apply(msg: => I, th: Throwable)(implicit loc: SourceLocMacro): O =
-      Reduce(pipes)(_ flush (level, msg, Some(th), context))
+    def apply(msg: => I, th: Throwable)(implicit loc: SourceLocMacro): Unit =
+      pipes foreach (_ flush (level, msg, Some(th), context))
   }
 
   object error extends AppenderLevel(Error)
@@ -39,6 +37,6 @@ final class Context[I, O: Monoid](pipes:   Seq[Pipe[I, O]],
 }
 
 object ContextUnit {
-  def apply[I, O: Monoid](pipes: Pipe[I, O]*): Context[I, O] =
-    new Context[I, O](pipes, Map.empty)
+  def apply[I](pipes: Pipe[I]*): Context[I] =
+    new Context[I](pipes, Map.empty)
 }

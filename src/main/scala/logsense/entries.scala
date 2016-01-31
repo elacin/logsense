@@ -2,11 +2,13 @@ package logsense
 
 import java.time.LocalDateTime
 
+import cats.{Eval, Later}
+
 final case class Entry[I](
   time:     LocalDateTime,
   level:    Level,
   location: SourceLoc,
-  input:    Lazy[I],
+  input:    Eval[I],
   thOpt:    Option[Throwable],
   context:  Map[String, String]){
 

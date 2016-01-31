@@ -30,9 +30,9 @@ object filters {
 
   def inPackage[T](s: String) =
     Filter[T]{
-      case Entry(_, _, SourceLocMacro(e, _, _), _, _) =>
+      case Entry(_, _, SourceLocMacro(e, _, _), _, _, _) =>
         e.value startsWith s
-      case Entry(_, _, SourceLocLogger(logger), _, _) =>
+      case Entry(_, _, SourceLocLogger(logger), _, _, _) =>
         logger startsWith s
     }
 

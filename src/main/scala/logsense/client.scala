@@ -1,11 +1,12 @@
 package logsense
 
+import cats.Later
+
 object client extends App {
   import filters._
   import appenders._
-  import cats.std.unit._
 
-  val consoleAppender: Appender[String, Unit] = {
+  val consoleAppender: Appender[String] = {
     def locStr(location: SourceLoc): String =
       location match {
         case SourceLocLogger(value) =>
@@ -14,19 +15,20 @@ object client extends App {
           s"${enclosing.value} (${file.value.split("/").last}: ${line.value})"
       }
 
-    def ctxStr(context: Map[String, String]): String = {
+    def mapStr(context: Map[String, String]): String = {
       if (context.isEmpty) ""
       else context.mkString("[", ",", "]: ")
     }
 
     ConsoleCustom {
-      case Entry(t, level, loc: SourceLoc, msg, Some(th), ctx) =>
-        s"$t: $level: ${locStr(loc)}: ${ctxStr(ctx)}${msg.lazyValue}: ${th.getMessage}"
-      case Entry(t, level, loc, msg, None, ctx) =>
-        s"$t: $level: ${locStr(loc)}: ${ctxStr(ctx)} ${msg.lazyValue}"
+      case Entry(t, level, loc: SourceLoc, msg, Some(th), map) =>
+        s"$t: $level: ${locStr(loc)}: ${mapStr(map)}${msg.value}: ${th.getMessage}"
+      case Entry(t, level, loc, msg, None, map) =>
+        s"$t: $level: ${locStr(loc)}: ${mapStr(map)} ${msg.value}"
     }
   }
-  val pipe: Pipe[String, Unit] =
+
+  val pipe: Pipe[String] =
     Pipe(
       consoleAppender && NoopAppender && CachingAppender,
       infoMin  && inPackage("logsense"),
@@ -34,10 +36,10 @@ object client extends App {
       warningMin
     )
 
-  val ctx: Context[String, Unit] =
+  val ctx: Context[String] =
     ContextUnit(pipe)
 
-  Lazy[String](???) map (_.toString)
+  Later[String](???) map (_.toString)
   ctx.trace("ARNE", new RuntimeException("ex"))
   ctx.debug("ARNE")
   ctx.info("ARNE")
@@ -51,15 +53,15 @@ object client extends App {
     val FromSecret: Secret => String =
       v => s"Discovered «${v.hidden}»!"
 
-    val myCtx: Context[Secret, Unit] =
+    val secretLogger: Context[Secret] =
       (ctx
         xmap FromSecret
-        filtered Filter(_.input.lazyValue.hidden.contains("xyzzy"))
+        filtered Filter(_.input.value.hidden.contains("xyzzy"))
         enriched ("userId" -> 113.toString)
       )
 
-    myCtx.info(Secret("xyzzy"))
-    myCtx.info(Secret("XYZZY"))
+    secretLogger.info(Secret("xyzzy")) // printed
+    secretLogger.info(Secret("xxzzy")) // not printed
   }
 
   CachingAppender.cache foreach println
